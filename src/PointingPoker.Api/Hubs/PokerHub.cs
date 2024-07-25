@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.AspNetCore.SignalR;
+using PointingPoker.Models.Enums;
 
 namespace PointingPoker.Api.Hubs
 {
@@ -38,7 +39,7 @@ namespace PointingPoker.Api.Hubs
 		/// <param name="user">User name.</param>
 		/// <param name="card">Poker Card.</param>
 		/// <returns>Task.</returns>
-		public async Task PlayCard(string tableId, string user, string card)
+		public async Task PlayCard(string tableId, string user, PokerCard card)
 		{
 			await this.Clients.Group(tableId).SendAsync("ReceiveCard", this.Context.ConnectionId, card);
 		}

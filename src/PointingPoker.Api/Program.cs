@@ -33,7 +33,7 @@ namespace PointingPoker.Api
 			});
 			var app = builder.Build();
 			app.UseResponseCompression();
-			app.MapHub<ChatHub>("/chatHub");
+			app.MapHub<PokerHub>("/pokerHub");
 
 			if (app.Environment.IsDevelopment())
 			{
