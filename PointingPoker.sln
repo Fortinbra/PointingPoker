@@ -7,9 +7,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{9AE42FE5-F3A
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{90D57BEA-EBC9-4B1E-A227-13494DEAE559}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PointingPoker.Api", "src\PointingPoker.Api\PointingPoker.Api.csproj", "{AC30213C-547D-4A03-8FA5-C4CA6246F3AC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PointingPoker.Api", "src\PointingPoker.Api\PointingPoker.Api.csproj", "{AC30213C-547D-4A03-8FA5-C4CA6246F3AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PointingPoker.Client", "src\PointingPoker.Client\PointingPoker.Client.csproj", "{C4964761-D466-4A48-AB79-BEDA8A74C4B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PointingPoker.Client", "src\PointingPoker.Client\PointingPoker.Client.csproj", "{C4964761-D466-4A48-AB79-BEDA8A74C4B8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{27970AC5-974D-426B-ADF5-264920493A91}"
+	ProjectSection(SolutionItems) = preProject
+		stylecop.json = stylecop.json
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PointingPoker.Models", "src\PointingPoker.Models\PointingPoker.Models.csproj", "{EA46CD7B-FFA0-42A5-BEB7-237C01545978}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +32,10 @@ Global
 		{C4964761-D466-4A48-AB79-BEDA8A74C4B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4964761-D466-4A48-AB79-BEDA8A74C4B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4964761-D466-4A48-AB79-BEDA8A74C4B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA46CD7B-FFA0-42A5-BEB7-237C01545978}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA46CD7B-FFA0-42A5-BEB7-237C01545978}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA46CD7B-FFA0-42A5-BEB7-237C01545978}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA46CD7B-FFA0-42A5-BEB7-237C01545978}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -32,6 +43,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{AC30213C-547D-4A03-8FA5-C4CA6246F3AC} = {9AE42FE5-F3AC-4FD5-AFFE-C54BE25DEBE5}
 		{C4964761-D466-4A48-AB79-BEDA8A74C4B8} = {9AE42FE5-F3AC-4FD5-AFFE-C54BE25DEBE5}
+		{EA46CD7B-FFA0-42A5-BEB7-237C01545978} = {9AE42FE5-F3AC-4FD5-AFFE-C54BE25DEBE5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D281EDBC-2E0D-4C9C-9C65-9E735C041019}
