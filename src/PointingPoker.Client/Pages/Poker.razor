@@ -1,0 +1,105 @@
+﻿@page "/poker"
+@using Microsoft.AspNetCore.SignalR.Client
+@using PointingPoker.Models.Enums
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+<PageTitle>Poker Table</PageTitle>
+
+<div class="form-group">
+    <label>
+        User:
+        <input @bind="userInput" />
+    </label>
+</div>
+<div class="form-group">
+    <label>
+        Table:
+        <input @bind="tableInput" />
+    </label>
+</div>
+<div class="form-group">
+    <label>
+        Card:
+        <select @bind="selectedCard">
+            @foreach (var card in Enum.GetValues<PokerCard>())
+            {
+                <option value="@card">@card</option>
+            }
+        </select>
+    </label>
+</div>
+<button @onclick="Send" disabled="@(!IsConnected)">Send</button>
+<button @onclick="ChangeTable" disabled="@(!IsConnected)">Change Table</button>
+
+<hr>
+
+<h3>Players at the Table</h3>
+<ul>
+    @foreach (var player in players)
+    {
+        <li>@player.Key: @player.Value</li>
+    }
+</ul>
+
+@code {
+    private HubConnection? hubConnection;
+    private Dictionary<string, PokerCard> players = new Dictionary<string, PokerCard>();
+    private string? userInput;
+    private string? tableInput;
+    private string? currentTable;
+    private PokerCard selectedCard = PokerCard.None;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/pokerhub"))
+            .Build();
+
+        hubConnection.On<string, PokerCard>("ReceiveCard", (user, card) =>
+        {
+            players[user] = card;
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task Send()
+    {
+        if (hubConnection is not null && !string.IsNullOrEmpty(currentTable))
+        {
+            await hubConnection.SendAsync("PlayCard", currentTable, userInput, selectedCard);
+        }
+    }
+
+    private async Task ChangeTable()
+    {
+        if (hubConnection is not null)
+        {
+            if (!string.IsNullOrEmpty(currentTable))
+            {
+                await hubConnection.SendAsync("LeaveTable", currentTable);
+            }
+
+            currentTable = tableInput;
+
+            if (!string.IsNullOrEmpty(currentTable))
+            {
+                await hubConnection.SendAsync("JoinTable", currentTable);
+                players.Clear();
+            }
+        }
+    }
+
+    public bool IsConnected =>
+        hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
