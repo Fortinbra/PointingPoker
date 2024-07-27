@@ -4,8 +4,6 @@
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
-<PageTitle>Poker Table</PageTitle>
-
 <div class="form-group">
     <label>
         User:
@@ -24,7 +22,7 @@
     <div class="form-group">
         <label>
             Card:
-            <select @bind="selectedCard">
+            <select @bind="selectedCard" @onchange="OnCardSelected">
                 @foreach (var card in Enum.GetValues<PokerCard>())
                 {
                     <option value="@card">@card</option>
@@ -32,8 +30,8 @@
             </select>
         </label>
     </div>
-    <button @onclick="Send" disabled="@(!IsConnected)">Send</button>
     <button @onclick="ChangeTable" disabled="@(!IsConnected)">Change Table</button>
+    <button @onclick="ToggleShowCards" disabled="@(!IsConnected)">Show Cards</button>
 
     <hr>
 
@@ -41,18 +39,19 @@
     <ul>
         @foreach (var player in players)
         {
-            <li>@player.Key: @player.Value.Item1 - @player.Value.Item2</li>
+            <li>@player.Key: @(showCards ? player.Value.ToString() : "Hidden")</li>
         }
     </ul>
 }
 
 @code {
     private HubConnection? hubConnection;
-    private Dictionary<string, (string, PokerCard)> players = new Dictionary<string, (string, PokerCard)>();
+    private Dictionary<string, PokerCard> players = new Dictionary<string, PokerCard>();
     private string? userInput;
     private string? tableInput;
     private string? currentTable;
     private PokerCard selectedCard = PokerCard.None;
+    private bool showCards = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -60,20 +59,29 @@
             .WithUrl(Navigation.ToAbsoluteUri("/pokerhub"))
             .Build();
 
-        hubConnection.On<string, string, PokerCard>("ReceiveCard", (table, user, card) =>
+        hubConnection.On<string, PokerCard>("ReceiveCard", (user, card) =>
         {
-            players[table] = (user, card);
+            players[user] = card;
             InvokeAsync(StateHasChanged);
         });
 
         await hubConnection.StartAsync();
     }
 
+    private async Task OnCardSelected(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<PokerCard>(e.Value?.ToString(), out var card))
+        {
+            selectedCard = card;
+            await Send();
+        }
+    }
+
     private async Task Send()
     {
         if (hubConnection is not null && !string.IsNullOrEmpty(currentTable))
         {
-            await hubConnection.SendAsync("PlayCard", currentTable, userInput, selectedCard);
+            await hubConnection.SendAsync("PlayCard", selectedCard);
         }
     }
 
@@ -90,10 +98,16 @@
 
             if (!string.IsNullOrEmpty(currentTable))
             {
-                await hubConnection.SendAsync("JoinTable", currentTable);
+                await hubConnection.SendAsync("JoinTable", currentTable, userInput);
                 players.Clear();
+                showCards = false;
             }
         }
+    }
+
+    private void ToggleShowCards()
+    {
+        showCards = !showCards;
     }
 
     private bool IsUserAndTableEntered =>
