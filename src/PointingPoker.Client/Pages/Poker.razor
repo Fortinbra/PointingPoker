@@ -19,40 +19,28 @@
     </label>
 </div>
 
-@if (IsUserAndTableEntered)
-{
-    <div class="form-group">
-        <label>
-            Card:
-            <select @bind="selectedCard">
-                @foreach (var card in Enum.GetValues<PokerCard>())
-                {
-                    <option value="@card">@card</option>
-                }
-            </select>
-        </label>
-    </div>
-    <button @onclick="Send" disabled="@(!IsConnected)">Send</button>
-    <button @onclick="ChangeTable" disabled="@(!IsConnected)">Change Table</button>
+<button @onclick="JoinTable" disabled="@(!IsUserAndTableEntered)">Join</button>
 
+@if (isJoined)
+{
     <hr>
 
     <h3>Players at the Table</h3>
     <ul>
         @foreach (var player in players)
         {
-            <li>@player.Key: @player.Value.Item1 - @player.Value.Item2</li>
+            <li>@player</li>
         }
     </ul>
 }
 
 @code {
     private HubConnection? hubConnection;
-    private Dictionary<string, (string, PokerCard)> players = new Dictionary<string, (string, PokerCard)>();
+    private List<string> players = new List<string>();
     private string? userInput;
     private string? tableInput;
     private string? currentTable;
-    private PokerCard selectedCard = PokerCard.None;
+    private bool isJoined = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -60,47 +48,31 @@
             .WithUrl(Navigation.ToAbsoluteUri("/pokerhub"))
             .Build();
 
-        hubConnection.On<string, string, PokerCard>("ReceiveCard", (table, user, card) =>
+        hubConnection.On<string>("ReceivePlayer", (user) =>
         {
-            players[table] = (user, card);
-            InvokeAsync(StateHasChanged);
+            if (!players.Contains(user))
+            {
+                players.Add(user);
+                InvokeAsync(StateHasChanged);
+            }
         });
 
         await hubConnection.StartAsync();
     }
 
-    private async Task Send()
+    private async Task JoinTable()
     {
-        if (hubConnection is not null && !string.IsNullOrEmpty(currentTable))
+        if (hubConnection is not null && !string.IsNullOrEmpty(tableInput) && !string.IsNullOrEmpty(userInput))
         {
-            await hubConnection.SendAsync("PlayCard", currentTable, userInput, selectedCard);
-        }
-    }
-
-    private async Task ChangeTable()
-    {
-        if (hubConnection is not null)
-        {
-            if (!string.IsNullOrEmpty(currentTable))
-            {
-                await hubConnection.SendAsync("LeaveTable", currentTable);
-            }
-
             currentTable = tableInput;
-
-            if (!string.IsNullOrEmpty(currentTable))
-            {
-                await hubConnection.SendAsync("JoinTable", currentTable);
-                players.Clear();
-            }
+            await hubConnection.SendAsync("JoinTable", currentTable, userInput);
+            players.Clear();
+            isJoined = true;
         }
     }
 
     private bool IsUserAndTableEntered =>
         !string.IsNullOrEmpty(userInput) && !string.IsNullOrEmpty(tableInput);
-
-    public bool IsConnected =>
-        hubConnection?.State == HubConnectionState.Connected;
 
     public async ValueTask DisposeAsync()
     {
