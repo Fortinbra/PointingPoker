@@ -4,8 +4,6 @@
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
-<PageTitle>Poker Table</PageTitle>
-
 <div class="form-group">
     <label>
         User:
@@ -58,6 +56,15 @@
         });
 
         await hubConnection.StartAsync();
+    }
+
+    private async Task OnCardSelected(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<PokerCard>(e.Value?.ToString(), out var card))
+        {
+            selectedCard = card;
+            await Send();
+        }
     }
 
     private async Task JoinTable()
