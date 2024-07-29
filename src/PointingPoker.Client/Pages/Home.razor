@@ -1,7 +1,108 @@
 ﻿@page "/"
 
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Welcome to Pointing Poker</h1>
 
-Welcome to your new app.
+<div class="form-group">
+    <label>
+        Username:
+        <input @bind="username" />
+    </label>
+</div>
+<div class="form-group">
+    <label>
+        Table:
+        <input @bind="table" />
+    </label>
+</div>
+
+<button @onclick="JoinTable" disabled="@(!IsConnected || !IsUserAndTableEntered || IsInTable)">Join Table</button>
+<button @onclick="LeaveTable" disabled="@(!IsConnected || !IsInTable)">Leave Table</button>
+
+@if (IsInTable)
+{
+    <h3>Users in Table @currentTable</h3>
+    <ul>
+        @foreach (var user in usersInTable)
+        {
+            <li>@user</li>
+        }
+    </ul>
+}
+
+@code {
+    private HubConnection? hubConnection;
+    private string? username;
+    private string? table;
+    private string? currentTable;
+    private List<string> usersInTable = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/pokerhub"))
+            .Build();
+
+        hubConnection.On<string>("UserJoined", async (user) =>
+        {
+            usersInTable.Add(user);
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<string>("UserLeft", async (user) =>
+        {
+            usersInTable.Remove(user);
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task JoinTable()
+    {
+        if (hubConnection is not null && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(table))
+        {
+            if (!string.IsNullOrEmpty(currentTable))
+            {
+                await hubConnection.SendAsync("LeaveTable", currentTable);
+            }
+
+            await hubConnection.SendAsync("JoinTable", table, username);
+            currentTable = table;
+
+            usersInTable = (await hubConnection.InvokeAsync<string[]>("GetUsersInTable", table)).ToList();
+        }
+    }
+
+    private async Task LeaveTable()
+    {
+        if (hubConnection is not null && !string.IsNullOrEmpty(currentTable))
+        {
+            await hubConnection.SendAsync("LeaveTable", currentTable);
+            currentTable = null;
+            usersInTable.Clear();
+        }
+    }
+
+    private bool IsUserAndTableEntered =>
+        !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(table);
+
+    private bool IsInTable =>
+        !string.IsNullOrEmpty(currentTable);
+
+    public bool IsConnected =>
+        hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
