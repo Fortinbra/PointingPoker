@@ -7,17 +7,16 @@ using PointingPoker.Api.Hubs;
 
 namespace PointingPoker.Api
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-#pragma warning disable SA1600 // Elements should be documented
+	/// <summary>
+	/// The main entry point for the application.
+	/// </summary>
 	public class Program
-#pragma warning restore SA1600 // Elements should be documented
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 	{
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-#pragma warning disable SA1600 // Elements should be documented
+		/// <summary>
+		/// The main method, which is the entry point of the application.
+		/// </summary>
+		/// <param name="args">The command-line arguments.</param>
 		public static void Main(string[] args)
-#pragma warning restore SA1600 // Elements should be documented
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
@@ -29,8 +28,9 @@ namespace PointingPoker.Api
 			builder.Services.AddSignalR();
 			builder.Services.AddResponseCompression(opt =>
 			{
-				opt.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);
+				opt.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/octet-stream" });
 			});
+
 			var app = builder.Build();
 			app.UseResponseCompression();
 			app.MapHub<PokerHub>("/pokerHub");

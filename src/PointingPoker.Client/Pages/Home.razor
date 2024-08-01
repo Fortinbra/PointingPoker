@@ -1,6 +1,7 @@
 ﻿@page "/"
 
 @using Microsoft.AspNetCore.SignalR.Client
+@using PointingPoker.Models
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
@@ -23,6 +24,7 @@
 
 <button @onclick="JoinTable" disabled="@(!IsConnected || !IsUserAndTableEntered || IsInTable)">Join Table</button>
 <button @onclick="LeaveTable" disabled="@(!IsConnected || !IsInTable)">Leave Table</button>
+<button @onclick="ToggleShowCards">Show Cards</button>
 
 @if (IsInTable)
 {
@@ -30,7 +32,16 @@
     <ul>
         @foreach (var user in usersInTable)
         {
-            <li>@user</li>
+            <li>
+                @user.Username
+                @if (user.Username == username || showCards)
+                {
+                    if (!string.IsNullOrEmpty(user.Card))
+                    {
+                        <span>- @user.Card</span>
+                    }
+                }
+            </li>
         }
     </ul>
 }
@@ -40,7 +51,8 @@
     private string? username;
     private string? table;
     private string? currentTable;
-    private List<string> usersInTable = new List<string>();
+    private List<User> usersInTable = new List<User>();
+    private bool showCards = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -50,14 +62,28 @@
 
         hubConnection.On<string>("UserJoined", async (user) =>
         {
-            usersInTable.Add(user);
+            usersInTable.Add(new User { Username = user });
             await InvokeAsync(StateHasChanged);
         });
 
         hubConnection.On<string>("UserLeft", async (user) =>
         {
-            usersInTable.Remove(user);
-            await InvokeAsync(StateHasChanged);
+            var userInTable = usersInTable.FirstOrDefault(u => u.Username == user);
+            if (userInTable != null)
+            {
+                usersInTable.Remove(userInTable);
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        hubConnection.On<string, string>("CardPlayed", async (user, card) =>
+        {
+            var userInTable = usersInTable.FirstOrDefault(u => u.Username == user);
+            if (userInTable != null)
+            {
+                userInTable.Card = card;
+                await InvokeAsync(StateHasChanged);
+            }
         });
 
         await hubConnection.StartAsync();
@@ -75,7 +101,8 @@
             await hubConnection.SendAsync("JoinTable", table, username);
             currentTable = table;
 
-            usersInTable = (await hubConnection.InvokeAsync<string[]>("GetUsersInTable", table)).ToList();
+            var users = await hubConnection.InvokeAsync<string[]>("GetUsersInTable", table);
+            usersInTable = users.Select(u => new User { Username = u }).ToList();
         }
     }
 
@@ -87,6 +114,11 @@
             currentTable = null;
             usersInTable.Clear();
         }
+    }
+
+    private void ToggleShowCards()
+    {
+        showCards = !showCards;
     }
 
     private bool IsUserAndTableEntered =>
