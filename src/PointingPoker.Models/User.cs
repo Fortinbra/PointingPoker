@@ -1,14 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// <copyright file="User.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
 
 namespace PointingPoker.Models
 {
-    public class User
+    /// <summary>
+    /// User class.
+    /// </summary>
+    /// <param name="username">Username.</param>
+    /// <param name="card">Card.</param>
+    public class User(string username, string? card = null)
     {
-        public string Username { get; set; }
-        public string? Card { get; set; }
+        /// <summary>
+        /// Gets or sets Username.
+        /// </summary>
+        public string Username { get; set; } = username;
+
+        /// <summary>
+        /// Gets or sets Card.
+        /// </summary>
+        public string? Card { get; set; } = card;
     }
 }

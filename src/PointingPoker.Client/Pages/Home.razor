@@ -7,24 +7,26 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Welcome to Pointing Poker</h1>
+<div class="container">
+    <h1>Welcome to Pointing Poker</h1>
 
-<div class="form-group">
-    <label>
-        Username:
-        <input @bind="username" />
-    </label>
-</div>
-<div class="form-group">
-    <label>
-        Table:
-        <input @bind="table" />
-    </label>
-</div>
+    <div class="form-group">
+        <label>
+            Username:
+            <input @bind="username" />
+        </label>
+    </div>
+    <div class="form-group">
+        <label>
+            Table:
+            <input @bind="table" />
+        </label>
+    </div>
 
-<button @onclick="JoinTable" disabled="@(!IsConnected || !IsUserAndTableEntered || IsInTable)">Join Table</button>
-<button @onclick="LeaveTable" disabled="@(!IsConnected || !IsInTable)">Leave Table</button>
-<button @onclick="ToggleShowCards">Show Cards</button>
+    <button @onclick="JoinTable" disabled="@(!IsConnected || !IsUserAndTableEntered || IsInTable)">Join Table</button>
+    <button @onclick="LeaveTable" disabled="@(!IsConnected || !IsInTable)">Leave Table</button>
+    <button @onclick="ToggleShowCards">Show Cards</button>
+</div>
 
 @if (IsInTable)
 {
@@ -60,32 +62,6 @@
             .WithUrl(Navigation.ToAbsoluteUri("/pokerhub"))
             .Build();
 
-        hubConnection.On<string>("UserJoined", async (user) =>
-        {
-            usersInTable.Add(new User { Username = user });
-            await InvokeAsync(StateHasChanged);
-        });
-
-        hubConnection.On<string>("UserLeft", async (user) =>
-        {
-            var userInTable = usersInTable.FirstOrDefault(u => u.Username == user);
-            if (userInTable != null)
-            {
-                usersInTable.Remove(userInTable);
-                await InvokeAsync(StateHasChanged);
-            }
-        });
-
-        hubConnection.On<string, string>("CardPlayed", async (user, card) =>
-        {
-            var userInTable = usersInTable.FirstOrDefault(u => u.Username == user);
-            if (userInTable != null)
-            {
-                userInTable.Card = card;
-                await InvokeAsync(StateHasChanged);
-            }
-        });
-
         await hubConnection.StartAsync();
     }
 
@@ -102,7 +78,7 @@
             currentTable = table;
 
             var users = await hubConnection.InvokeAsync<string[]>("GetUsersInTable", table);
-            usersInTable = users.Select(u => new User { Username = u }).ToList();
+            usersInTable = users.Select(u => new User(u)).ToList();
         }
     }
 
